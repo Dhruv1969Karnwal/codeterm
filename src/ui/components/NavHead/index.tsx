@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { IoSettingsOutline } from "react-icons/io5";
 import SettingsModal from "../Settings/Model/settingModel";
 import { FaTimes } from "react-icons/fa";
@@ -11,6 +11,7 @@ import {
   FiMessageCircle,
 } from "react-icons/fi";
 import { Socket } from "socket.io-client";
+import { shortcutContext } from "../../context/shortCutContext";
 
 interface Section {
   title: string;
@@ -47,6 +48,7 @@ const NavHead: React.FC<NavHeadProps> = ({
   sendMessage,
   updateTabName,
 }) => {
+  const {registerListener, removeListener} = useContext(shortcutContext)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [hoveredTabId, setHoveredTabId] = useState<string | null>(null);
 
@@ -57,6 +59,10 @@ const NavHead: React.FC<NavHeadProps> = ({
   const handleTabRemove = (id: string, event: React.MouseEvent) => {
     event.stopPropagation();
     onTabRemove(id);
+
+    // if(socket && isConnected){
+    //   socket.emit('terminate_session', { terminal_id: id });
+    // }
   };
 
   const [sections, setSections] = useState<Section[]>([
@@ -183,8 +189,11 @@ const NavHead: React.FC<NavHeadProps> = ({
   const [newTabName, setNewTabName] = useState("");
 
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "F2" && activeTabId) {
+    const keys = new Set(["f2"]);
+  
+    // Define the action for F2 key press
+    const handleKeyPress = () => {
+      if (activeTabId) {
         setEditingTabId(activeTabId);
         const activeTab = tabs.find((tab) => tab.id === activeTabId);
         if (activeTab) {
@@ -193,12 +202,16 @@ const NavHead: React.FC<NavHeadProps> = ({
         setIsEditing(true);
       }
     };
-
-    window.addEventListener("keydown", handleKeyDown);
+  
+    // Register the listener for the F2 key combination
+    registerListener(keys, handleKeyPress);
+  
+    // Cleanup: Remove the listener when the component unmounts or dependencies change
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      removeListener(keys);
     };
-  }, [activeTabId, tabs]);
+  }, [activeTabId, tabs, registerListener, removeListener]);
+  
 
   const handleTabDoubleClick = (tabId: string) => {
     // Trigger the same behavior as F2 or double-click to start editing
@@ -247,6 +260,54 @@ const NavHead: React.FC<NavHeadProps> = ({
   const hideHoverInfo = () => {
     setHoverInfo({ ...hoverInfo, show: false });
   };
+
+
+  const shortcuts = [
+    {
+      keys: new Set(["control", "d"]),
+      action: (event: KeyboardEvent, activeTabId: string, onTabRemove: Function) => {
+        event.preventDefault();
+        onTabRemove(activeTabId);
+      },
+    },
+    {
+      keys: new Set(["control", ","]),
+      action: (event: KeyboardEvent, setIsModalOpen: Function) => {
+        event.preventDefault();
+        setIsModalOpen(true);
+      },
+    },
+    {
+      keys: new Set(["control", "."]),
+      action: (event: KeyboardEvent, setIsModalOpen: Function) => {
+        event.preventDefault();
+        setIsModalOpen(false);
+      },
+    },
+    {
+      keys: new Set(["control", "shift", "r"]),
+      action: (event: KeyboardEvent, setIsSliderOpen: Function) => {
+        event.preventDefault();
+        setIsSliderOpen(false);
+      },
+    },
+    {
+      keys: new Set(["control", "shift", "t"]),
+      action: (event: KeyboardEvent, onAddTab: Function) => {
+        event.preventDefault();
+        onAddTab();
+      },
+    },
+    {
+      keys: new Set(["control", "escape"]),
+      action: (event: KeyboardEvent, activeTabId: string, onTabRemove: Function) => {
+        event.preventDefault();
+        onTabRemove(activeTabId);
+      },
+    },
+  ];
+
+  
 
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
@@ -303,7 +364,7 @@ const NavHead: React.FC<NavHeadProps> = ({
         {tabs.map((tab) => (
           <div
             key={tab.id}
-            className={`flex text-center text-[--textColor] hover:bg-[--darkGrayColor] transition-colors cursor-pointer h-9 items-center bg-opacity-50 bg-gradient-to-b from-[--bgGradientStart] to-[--bgGradientEnd] px-3 py-1 w-40 isolate  bg-white/20 shadow-lg ring-1 ring-black/5 ${
+            className={`flex text-center text-[--textColor] hover:bg-[--darkGrayColor] transition-colors cursor-pointer h-9 items-center bg-opacity-50 bg-gradient-to-b from-[--bgGradientStart] to-[--bgGradientEnd] px-3 py-1 w-40 isolate  bg-[--grayColor] shadow-lg ring-1 ring-[--shadowColor] ${
               tab.id === activeTabId
                 ? "relative bg-[--selectionBackgroundColor] font-medium border-b-2 border-gradient hide-scrollbar "
                 : ""
@@ -432,7 +493,7 @@ const NavHead: React.FC<NavHeadProps> = ({
 
           <div className="p-4">
             <div className="custom-font-size text-[--textColor] mb-4">
-              v0.2024.09.03.08.02.stable_03
+              v0.0.1
             </div>
 
             <div className="flex justify-between custom-font-size text-[--textColor]">

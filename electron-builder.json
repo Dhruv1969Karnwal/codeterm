@@ -17,6 +17,12 @@
         "from": "backend/dist/macOS/mainSave",
         "to": "backend/mainSave"
       }
+    ],
+    "protocols": [
+      {
+        "name": "codeTerm",
+        "schemes": ["codeTerm"]
+      }
     ]
   },
   "linux": {
@@ -25,7 +31,7 @@
     "AppImage", "deb"
   ],
   "category": "Utility",
-  "maintainer": "Your Name karnwaldhruv84@gmail.com",
+  "maintainer": "contact@codemate.ai",
   "description": "An ai-powered terminal",
   "extraResources": [
     {
@@ -33,6 +39,12 @@
       "to": "backend/mainSave"
     }
   ],
+  "protocols": [
+      {
+        "name": "codeTerm",
+        "schemes": ["codeTerm"]
+      }
+    ],
   "executableName": "CodeTerm-0.0.1"
 },
 "deb": {
